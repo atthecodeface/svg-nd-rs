@@ -176,6 +176,48 @@ impl Transform {
     //zz All done
 }
 
+//ip std::ops::Add<Point> for Transform
+impl std::ops::Add<Point> for Transform {
+    type Output = Self;
+    #[inline]
+    fn add(mut self, dxy: Point) -> Self {
+        self.translation += dxy;
+        self
+    }
+}
+
+//ip std::ops::Sub<Point> for Transform
+impl std::ops::Sub<Point> for Transform {
+    type Output = Self;
+    #[inline]
+    fn sub(mut self, dxy: Point) -> Self {
+        self.translation -= dxy;
+        self
+    }
+}
+
+//ip std::ops::Mul<f64> for Transform
+impl std::ops::Mul<f64> for Transform {
+    type Output = Self;
+    #[inline]
+    fn mul(mut self, scale: f64) -> Self {
+        self.translation *= scale;
+        self.scale *= scale;
+        self
+    }
+}
+
+//ip std::ops::Div<f64> for Transform
+impl std::ops::Div<f64> for Transform {
+    type Output = Self;
+    #[inline]
+    fn div(mut self, scale: f64) -> Self {
+        self.translation /= scale;
+        self.scale /= scale;
+        self
+    }
+}
+
 //ip std::fmt::Display for Transform
 impl std::fmt::Display for Transform {
     //mp fmt - format a `Transform` for display

@@ -17,25 +17,23 @@ limitations under the License.
  */
 
 //a Imports
-//a Imports and exports
-// mod point;
-// mod range;
-// mod path;
-// mod rectangle;
-// mod polygon;
-mod transform;
-
 /// The [Point] type is a 2D point of f64's
 pub type Point = geo_nd::FArray<f64, 2>;
 
 /// The [Bezier] type is a Bezier curve of [Point]s
 pub type Bezier = bezier_nd::Bezier<f64, Point, 2>;
 
-// pub use self::transform::Transform;
-// pub use self::range::{Range};
-// pub use self::path::{BezierPath};
+mod bezier_path;
+mod polygon;
+mod range;
+mod transform;
+// mod rectangle; BBox?
+
+pub use bezier_path::BezierPath;
+pub use range::Range;
+pub use transform::Transform;
 // pub use self::rectangle::{Rectangle, Float4};
-// pub use self::polygon::Polygon;
+pub use polygon::Polygon;
 
 // mod generate_svg;
 // mod svg;
