@@ -88,9 +88,9 @@ impl BBox {
         Self { x, y }
     }
 
-    //fp bbox_of_points
+    //cp of_points
     /// Make a new rectangle that is the bounding box of a vec of points
-    pub fn bbox_of_points(pts: &Vec<Point>) -> Self {
+    pub fn of_points(pts: &Vec<Point>) -> Self {
         let mut s = Self::none();
         for p in pts.iter() {
             s.x = s.x.include(p[0]);

@@ -23,17 +23,17 @@ pub type Point = geo_nd::FArray<f64, 2>;
 /// The [Bezier] type is a Bezier curve of [Point]s
 pub type Bezier = bezier_nd::Bezier<f64, Point, 2>;
 
+mod bbox;
 mod bezier_path;
 mod polygon;
 mod range;
 mod transform;
-// mod rectangle; BBox?
 
+pub use bbox::BBox;
 pub use bezier_path::BezierPath;
+pub use polygon::Polygon;
 pub use range::Range;
 pub use transform::Transform;
-// pub use self::rectangle::{Rectangle, Float4};
-pub use polygon::Polygon;
 
 // mod generate_svg;
 // mod svg;

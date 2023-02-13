@@ -19,8 +19,7 @@ limitations under the License.
 //a Imports
 use geo_nd::Vector;
 
-use crate::{BezierPath, Point};
-// use super::Rectangle;
+use crate::{BBox, BezierPath, Point};
 
 //tp Polygon
 /// A polygon here defines an n-gon, from which one can generate a bezier path
@@ -197,24 +196,24 @@ impl Polygon {
 
     //mp get_bbox
     /// Get the bounding box for the polygon (it may be pessimistic)
-    /*
-    pub fn get_bbox(&self) -> Rectangle {
+    pub fn get_bbox(&self) -> BBox {
         match self.vertices {
-            0 => Rectangle::new(
-                -self.size * self.eccentricity,
-                -self.size,
-                self.size * self.eccentricity,
-                self.size,
+            0 => BBox::new(
+                self.center[0] - self.size * self.eccentricity,
+                self.center[1] - self.size,
+                self.center[0] + self.size * self.eccentricity,
+                self.center[1] + self.size,
             ),
-            1 => Rectangle::new(
+            1 => BBox::new(
                 self.center[0],
                 self.center[1],
                 self.center[0],
                 self.center[1],
             ),
-            _ => Rectangle::bbox_of_points(&self.get_points()),
+            _ => BBox::of_points(&self.get_points()),
         }
-    }*/
+    }
+
     //mp get_points
     /// Get the points that make up the corners of the polygon, in
     /// anticlockwise order

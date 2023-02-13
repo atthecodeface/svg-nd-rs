@@ -18,10 +18,10 @@ limitations under the License.
 
 //a Range
 //tp Range
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 /// This is a simple 'range' class for a single dimension
 ///
-/// min < max for a valid range; min >= max indicates an empty range
+/// min <= max for a valid range; min > max indicates an empty range
 pub struct Range {
     /// Minimum coordinate of the range
     min: f64,
@@ -37,12 +37,19 @@ impl std::fmt::Display for Range {
     }
 }
 
+//tp Default for Range
+impl std::default::Default for Range {
+    fn default() -> Self {
+        Self::none()
+    }
+}
+
 //ti Range
 impl Range {
     //fp new
     /// Create a new point from (min,max)
     #[inline]
-    pub const fn new(min: f64, max: f64) -> Self {
+    pub fn new(min: f64, max: f64) -> Self {
         Self { min, max }
     }
 
@@ -50,14 +57,23 @@ impl Range {
     /// Create a new empty range (0,0)
     #[inline]
     pub const fn none() -> Self {
-        Self { min: 0., max: 0. }
+        Self { min: 0., max: -1. }
     }
 
     //fp is_none
     /// Return true if the range is empty
     #[inline]
     pub fn is_none(&self) -> bool {
-        self.min >= self.max
+        self.min > self.max
+    }
+
+    //fp of_pts
+    pub fn of_pts(a: f64, b: f64) -> Self {
+        if a < b {
+            Self::new(a, b)
+        } else {
+            Self::new(b, a)
+        }
     }
 
     //mp size
@@ -69,6 +85,50 @@ impl Range {
         } else {
             self.max - self.min
         }
+    }
+
+    //mp center
+    /// Return the center of the range
+    #[inline]
+    pub fn center(&self) -> f64 {
+        (self.max + self.min) / 2.0
+    }
+
+    //cp include
+    /// Include a point into the range, exanding min or max if required
+    pub fn include(mut self, x: f64) -> Self {
+        if self.is_none() {
+            self.min = x;
+            self.max = x;
+        } else {
+            if x < self.min {
+                self.min = x;
+            }
+            if x > self.max {
+                self.max = x;
+            }
+        }
+        self
+    }
+
+    //cp enlarge
+    /// Enlarge by an amount
+    pub fn enlarge(mut self, value: f64) -> Self {
+        if !self.is_none() {
+            self.min -= value;
+            self.max += value;
+        }
+        self
+    }
+
+    //cp reduce
+    /// Reduce by an amount
+    pub fn reduce(mut self, value: f64) -> Self {
+        if !self.is_none() {
+            self.min += value;
+            self.max -= value;
+        }
+        self
     }
 
     //cp union
@@ -124,6 +184,15 @@ impl std::ops::Add<f64> for Range {
         }
     }
 }
+
+//ip std::ops::AddAssign<f64> for Range
+impl std::ops::AddAssign<f64> for Range {
+    fn add_assign(&mut self, delta: f64) {
+        self.min += delta;
+        self.max += delta;
+    }
+}
+
 //ip std::ops::Sub<f64> for Range
 impl std::ops::Sub<f64> for Range {
     type Output = Self;
@@ -134,6 +203,15 @@ impl std::ops::Sub<f64> for Range {
         }
     }
 }
+
+//ip std::ops::SubAssign<f64> for Range
+impl std::ops::SubAssign<f64> for Range {
+    fn sub_assign(&mut self, delta: f64) {
+        self.min -= delta;
+        self.max -= delta;
+    }
+}
+
 //ip std::ops::Mul<f64> for Range
 impl std::ops::Mul<f64> for Range {
     type Output = Self;
@@ -151,6 +229,14 @@ impl std::ops::Mul<f64> for Range {
         }
     }
 }
+//ip std::ops::MulAssign<f64> for Range
+impl std::ops::MulAssign<f64> for Range {
+    fn mul_assign(&mut self, scale: f64) {
+        self.max *= scale;
+        self.min *= scale;
+    }
+}
+
 //ip std::ops::Div<f64> for Range
 impl std::ops::Div<f64> for Range {
     type Output = Self;
@@ -168,6 +254,29 @@ impl std::ops::Div<f64> for Range {
         }
     }
 }
+//ip std::ops::DivAssign<f64> for Range
+impl std::ops::DivAssign<f64> for Range {
+    fn div_assign(&mut self, scale: f64) {
+        self.max /= scale;
+        self.min /= scale;
+    }
+}
+
+//ip std::ops::Index<usize> for Range
+impl std::ops::Index<usize> for Range {
+    type Output = f64;
+
+    #[inline]
+    fn index(&self, index: usize) -> &Self::Output {
+        assert!(index < 2);
+        if index == 0 {
+            &self.min
+        } else {
+            &self.max
+        }
+    }
+}
+
 //a Tests
 //mt Test for Range
 #[cfg(test)]
