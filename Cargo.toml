@@ -1,0 +1,18 @@
+[package]
+name = "svg-rs"
+version = "0.1.0"
+edition = "2021"
+readme = "README.md"
+authors = ["Gavin J Stark"]
+description = "A simple library for creation of SVG diagrams\n"
+homepage = "https://github.com/atthecodeface/svg-rs"
+documentation = "https://docs.rs/svg-rs"
+keywords = ["svg", "geometry", "vector", "plotting"]
+categories = ["graphics", "rendering"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/atthecodeface/svg-rs"
+
+[dependencies]
+thiserror = "1.0"
+geo-nd = "0.1.2"
+bezier-nd = "0.1.4"
