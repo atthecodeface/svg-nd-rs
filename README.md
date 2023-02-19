@@ -1,4 +1,4 @@
-# svg-rs
+# svg-nd
 
 This is a simple library for the generation of SVG diagrams
 
@@ -8,7 +8,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-svg-rs = "0.1.0"
+svg-nd = "0.1.0"
 ```
 
 ## Releases
