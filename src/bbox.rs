@@ -18,7 +18,7 @@ limitations under the License.
 //a Imports
 use geo_nd::vector;
 
-use crate::{Point, Range};
+use crate::{Point, Range, Transform};
 
 //a BBox
 //tp BBox
@@ -28,9 +28,9 @@ use crate::{Point, Range};
 /// region is deemed to be *none*
 pub struct BBox {
     /// X range
-    x: Range,
+    pub x: Range,
     /// Y range
-    y: Range,
+    pub y: Range,
 }
 
 //ti Display for BBox
@@ -90,7 +90,7 @@ impl BBox {
 
     //cp of_points
     /// Make a new rectangle that is the bounding box of a vec of points
-    pub fn of_points(pts: &Vec<Point>) -> Self {
+    pub fn of_points(pts: &[Point]) -> Self {
         let mut s = Self::none();
         for p in pts.iter() {
             s.x = s.x.include(p[0]);
@@ -116,7 +116,7 @@ impl BBox {
     /// original point is along its width, and similarly for the Y
     /// coordinate
     ///
-    pub fn pt_within(&self, mut pt: Point) -> Point {
+    pub fn pt_within(&self, pt: Point) -> Point {
         if self.is_none() {
             pt
         } else {
@@ -152,20 +152,6 @@ impl BBox {
         [self.x.center(), self.y.center()].into()
     }
 
-    //mp xrange
-    /// Return the xrange of the bbox
-    ///
-    pub fn xrange(&self) -> Range {
-        self.x
-    }
-
-    //mp yrange
-    /// Return the yrange of the bbox
-    ///
-    pub fn yrange(&self) -> Range {
-        self.y
-    }
-
     //mp width
     /// Return the width of the rectangle (`x1` - `x0`)
     pub fn width(&self) -> f64 {
@@ -185,43 +171,66 @@ impl BBox {
         (self.center(), self.width(), self.height())
     }
 
+    //mp get_bounds
+    /// Get the bounds
+    pub fn get_bounds(&self) -> (f64, f64, f64, f64) {
+        (self.x[0], self.y[0], self.width(), self.height())
+    }
+
     //cp enlarge
     /// Consume the rectangle and return a new rectangle enlarge by a
     /// fixed value
     ///
+    #[must_use]
     pub fn enlarge(mut self, value: f64) -> Self {
-        self.x.enlarge(value);
-        self.y.enlarge(value);
+        self.x = self.x.enlarge(value);
+        self.y = self.y.enlarge(value);
         self
     }
 
     //cp reduce
     /// Shrink the rectangle, keeping the same center, by a fixed value
     ///
+    #[must_use]
     pub fn reduce(mut self, value: f64) -> Self {
-        self.x.enlarge(value);
-        self.y.enlarge(value);
+        self.x = self.x.reduce(value);
+        self.y = self.y.reduce(value);
         self
     }
 
-    //mp expand
+    //cp expand
     /// exand in-place by expansion scaled by 'scale'
     ///
     /// Was Float4 x0, x1, y0,, x1 now [x0, y0, x1, y1]
+    #[must_use]
     pub fn expand(mut self, other: &[f64; 4], scale: f64) -> Self {
         self.x = Range::new(self.x[0] - scale * other[0], self.x[1] + scale * other[2]);
         self.y = Range::new(self.y[0] - scale * other[1], self.y[1] + scale * other[3]);
         self
     }
 
-    //mp shrink
+    //cp shrink
     /// shrink in-place by expansion scaled by 'scale'
+    #[must_use]
+    #[inline]
     pub fn shrink(self, other: &[f64; 4], scale: f64) -> Self {
         self.expand(other, -scale)
     }
 
-    //mp union
+    //cp include
+    /// Include a point into the BBox, exanding min or max if required
+    #[must_use]
+    #[inline]
+    pub fn include(mut self, p: Point) -> Self {
+        self.x = self.x.include(p[0]);
+        self.y = self.y.include(p[1]);
+        self
+    }
+
+    //cp union
     /// union this with another; if either is_zero then just the other
+    #[must_use]
+    #[inline]
     pub fn union(mut self, other: Self) -> Self {
         if other.is_none() {
             self
@@ -234,8 +243,10 @@ impl BBox {
         }
     }
 
-    //mp intersect
+    //cp intersect
     /// intersect this with another; if either is_zero then this will be zero
+    #[must_use]
+    #[inline]
     pub fn intersect(mut self, other: Self) -> Self {
         if other.is_none() {
             other
@@ -248,9 +259,10 @@ impl BBox {
         }
     }
 
-    //mp new_rotated_around
+    //cp new_rotated_around
     /// Rotate the rectangle around a point by an angle,
     /// generating a new rectangle that is the bounding box of that rotated rectangle
+    #[must_use]
     pub fn new_rotated_around(&self, pt: &Point, degrees: f64) -> Self {
         let radians = degrees.to_radians();
         let p0 = vector::rotate_around([self.x[0], self.y[0]], pt.as_ref(), radians, 0, 1);
@@ -270,6 +282,23 @@ impl BBox {
             .include(p2[1])
             .include(p3[1]);
         Self { x, y }
+    }
+
+    //mp transform
+    #[must_use]
+    #[inline]
+    pub fn transform(mut self, transform: &Transform) -> Self {
+        let corners: [Point; 4] = [
+            [self.x[0], self.y[0]].into(),
+            [self.x[1], self.y[0]].into(),
+            [self.x[0], self.y[1]].into(),
+            [self.x[1], self.y[1]].into(),
+        ];
+        self = Self::none();
+        for c in corners {
+            self = self.include(transform.apply(c));
+        }
+        self
     }
 
     //zz All done
@@ -412,8 +441,8 @@ mod tests_polygon {
         assert_eq!(x.width(), 8.);
         assert_eq!(x.height(), 6.);
         pair_eq(&x.get_wh(), 8., 6.);
-        range_eq(&x.xrange(), -3., 5.);
-        range_eq(&x.yrange(), 1., 7.);
+        range_eq(&x.x, -3., 5.);
+        range_eq(&x.y, 1., 7.);
         pt_eq(&x.get_cwh().0, 1., 4.);
         assert_eq!(x.get_cwh().1, 8.);
         assert_eq!(x.get_cwh().2, 6.);
@@ -431,25 +460,20 @@ mod tests_polygon {
         println!("x_or_y:{}", x_or_y);
         println!("x_and_z:{}", x_and_z);
         println!("x_or_z:{}", x_or_z);
-        dbg!("One");
-        range_eq(&x_and_y.xrange(), 4., 5.);
-        dbg!("Two");
-        range_eq(&x_and_y.yrange(), 1., 3.);
-        dbg!("Three");
-        range_eq(&x_or_y.xrange(), 2., 6.);
-        dbg!("Four");
-        range_eq(&x_or_y.yrange(), 0., 7.);
-        dbg!("Five");
+        range_eq(&x_and_y.x, 4., 5.);
+        range_eq(&x_and_y.y, 1., 3.);
+        range_eq(&x_or_y.x, 2., 6.);
+        range_eq(&x_or_y.y, 0., 7.);
 
         assert!(!x_and_z.is_none()); // was none originally
-        dbg!(x_and_z.xrange());
-        dbg!(x_and_z.yrange());
-        dbg!(x_or_z.xrange());
-        dbg!(x_or_z.yrange());
-        range_eq(&x_and_z.xrange(), 5., 5.);
-        range_eq(&x_and_z.yrange(), 1., 4.);
-        range_eq(&x_or_z.xrange(), 2., 7.);
-        range_eq(&x_or_z.yrange(), 1., 7.);
+        dbg!(x_and_z.x);
+        dbg!(x_and_z.y);
+        dbg!(x_or_z.x);
+        dbg!(x_or_z.y);
+        range_eq(&x_and_z.x, 5., 5.);
+        range_eq(&x_and_z.y, 1., 4.);
+        range_eq(&x_or_z.x, 2., 7.);
+        range_eq(&x_or_z.y, 1., 7.);
     }
     #[test]
     fn test_ops_1() {
@@ -459,10 +483,10 @@ mod tests_polygon {
         let x_p_2y = x.clone().expand(&y, 2.);
         println!("x_p_y:{}", x_p_y);
         println!("x_p_2y:{}", x_p_2y);
-        range_eq(&x_p_y.xrange(), 1.9, 5.3);
-        range_eq(&x_p_y.yrange(), 0.8, 7.5);
-        range_eq(&x_p_2y.xrange(), 1.8, 5.6);
-        range_eq(&x_p_2y.yrange(), 0.6, 8.);
+        range_eq(&x_p_y.x, 1.9, 5.3);
+        range_eq(&x_p_y.y, 0.8, 7.5);
+        range_eq(&x_p_2y.x, 1.8, 5.6);
+        range_eq(&x_p_2y.y, 0.6, 8.);
     }
     #[test]
     fn test_ops_2() {
@@ -472,9 +496,9 @@ mod tests_polygon {
         let x_m_2y = x.clone().shrink(&y, 2.);
         println!("x_m_y:{}", x_m_y);
         println!("x_m_2y:{}", x_m_2y);
-        range_eq(&x_m_y.xrange(), 2.1, 4.7);
-        range_eq(&x_m_y.yrange(), 1.2, 6.5);
-        range_eq(&x_m_2y.xrange(), 2.2, 4.4);
-        range_eq(&x_m_2y.yrange(), 1.4, 6.);
+        range_eq(&x_m_y.x, 2.1, 4.7);
+        range_eq(&x_m_y.y, 1.2, 6.5);
+        range_eq(&x_m_2y.x, 2.2, 4.4);
+        range_eq(&x_m_2y.y, 1.4, 6.);
     }
 }

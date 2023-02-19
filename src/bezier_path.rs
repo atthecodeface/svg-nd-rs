@@ -36,13 +36,16 @@ impl BezierPath {
     pub fn of_ellipse(origin: Point, radius: f64, eccentricity: f64, degrees: f64) -> Self {
         let ra = (90.0f64).to_radians();
         let rd = degrees.to_radians();
-        let x = Point::from_array([eccentricity, 0.]);
-        let y = Point::from_array([0., 1.]);
-        let mut v = Vec::new();
-        v.push(Bezier::arc(ra, radius, &origin, &x, &y, rd));
-        v.push(Bezier::arc(ra, radius, &origin, &y, &(-x), rd));
-        v.push(Bezier::arc(ra, radius, &origin, &(-x), &(-y), rd));
-        v.push(Bezier::arc(ra, radius, &origin, &(-y), &x, rd));
+        let c = rd.cos();
+        let s = rd.sin();
+        let x = Point::from_array([c * eccentricity, s * eccentricity]);
+        let y = Point::from_array([-s, c]);
+        let v = vec![
+            Bezier::arc(ra, radius, &origin, &x, &y, 0.),
+            Bezier::arc(ra, radius, &origin, &x, &y, ra),
+            Bezier::arc(ra, radius, &origin, &x, &y, ra * 2.),
+            Bezier::arc(ra, radius, &origin, &x, &y, ra * 3.),
+        ];
         Self { elements: v }
     }
 
@@ -82,11 +85,11 @@ impl BezierPath {
                 let corner = self.elements[i].borrow_pt(1); // same as i_1.borrow_pt(0);
                 let v0 = self.elements[i].tangent_at(1.);
                 let v1 = -self.elements[i_1].tangent_at(0.);
-                let bezier = Bezier::of_round_corner(&corner, &v0, &v1, rounding);
-                let np00 = self.elements[i].borrow_pt(0).clone();
-                let np01 = bezier.borrow_pt(0).clone();
-                let np10 = bezier.borrow_pt(1).clone();
-                let np11 = self.elements[i_1].borrow_pt(1).clone();
+                let bezier = Bezier::of_round_corner(corner, &v0, &v1, rounding);
+                let np00 = *self.elements[i].borrow_pt(0);
+                let np01 = *bezier.borrow_pt(0);
+                let np10 = *bezier.borrow_pt(1);
+                let np11 = *self.elements[i_1].borrow_pt(1);
                 self.elements[i] = Bezier::line(&np00, &np01);
                 self.elements[i_1] = Bezier::line(&np10, &np11);
                 self.elements.insert(i + 1, bezier);
@@ -106,9 +109,9 @@ impl BezierPath {
         if n == 0 {
             Point::zero()
         } else if index == 0 {
-            self.elements[0].borrow_pt(0).clone()
+            *self.elements[0].borrow_pt(0)
         } else {
-            self.elements[n - 1].borrow_pt(1).clone()
+            *self.elements[n - 1].borrow_pt(1)
         }
     }
 
@@ -135,13 +138,10 @@ impl BezierPath {
             } else {
                 let (t, _in_bezier) = b.t_of_distance(straightness, distance);
                 if t == 0. {
-                    ()
                 } else if t == 1. {
                     self.elements.remove(0);
-                    ()
                 } else {
                     self.elements[0] = b.bezier_between(t, 1.);
-                    ()
                 }
             }
         } else {
@@ -156,12 +156,9 @@ impl BezierPath {
                 let (t, _in_bezier) = b.t_of_distance(straightness, l - distance);
                 if t == 0. {
                     self.elements.pop();
-                    ()
                 } else if t == 1. {
-                    ()
                 } else {
                     self.elements[n - 1] = b.bezier_between(0., t);
-                    ()
                 }
             }
         }

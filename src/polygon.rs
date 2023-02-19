@@ -267,7 +267,7 @@ impl std::ops::Sub<Point> for Polygon {
     type Output = Self;
     #[inline]
     fn sub(mut self, dxy: Point) -> Self {
-        self.center += dxy;
+        self.center -= dxy;
         self
     }
 }

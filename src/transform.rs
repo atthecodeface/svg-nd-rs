@@ -32,7 +32,7 @@ use crate::{Point, SvgError};
 pub struct Transform {
     /// Translation - applied last
     translation: Point,
-    /// Rotation around the origin
+    /// Rotation around the origin in *degrees*
     rotation: f64,
     /// Scale factor
     scale: f64,
@@ -51,8 +51,28 @@ impl std::default::Default for Transform {
 
 //ip Transform
 impl Transform {
-    //fp of_trs
+    //ap translation
+    #[inline]
+    pub fn translation(&self) -> Point {
+        self.translation
+    }
+
+    //ap rotation
+    #[inline]
+    pub fn rotation(&self) -> f64 {
+        self.rotation
+    }
+
+    //ap scale
+    #[inline]
+    pub fn scale(&self) -> f64 {
+        self.scale
+    }
+
+    //cp of_trs
     /// Create a transform from a translation, rotation and scale
+    #[inline]
+    #[must_use]
     pub fn of_trs(translation: Point, rotation: f64, scale: f64) -> Self {
         Self {
             translation,
@@ -61,8 +81,18 @@ impl Transform {
         }
     }
 
-    //mp of_translation
+    //fp of_rotation
+    /// Create a transform from a rotation
+    #[inline]
+    #[must_use]
+    pub fn of_rotation(rotation: f64) -> Self {
+        Self::of_trs(Point::zero(), rotation, 1.)
+    }
+
+    //cp of_translation
     /// Create a transform from a translation
+    #[inline]
+    #[must_use]
     pub fn of_translation(translation: Point) -> Self {
         Self::of_trs(translation, 0., 1.)
     }
@@ -152,6 +182,15 @@ impl Transform {
     }
 
     //mp apply
+    /// Apply this transform to a point
+    pub fn apply(&self, pt: Point) -> Point {
+        let m = self.to_matrix();
+        let x = pt[0];
+        let y = pt[1];
+        [m[0] * x + m[1] * y + m[2], m[3] * x + m[4] * y + m[5]].into()
+    }
+
+    //mp apply_to_transform
     /// Apply this transform to another transform, returning a new
     /// transform
     // The result will be a scaling of both multipled together, and a
@@ -162,7 +201,7 @@ impl Transform {
     // Combine we get _ _ cs.DX-ss.DY+dx ; _ _ ss.DX+cs.DY+dy; 0 0 1
     // i.e. the resultant translation is:
     // self.rotate_scale(other.translate)+self.translate
-    pub fn apply(&self, other: &Self) -> Self {
+    pub fn apply_to_transform(&self, other: &Self) -> Self {
         let mut dxy = other.translation;
         dxy.rotate_around(&Point::zero(), self.rotation, 0, 1);
         dxy = dxy * self.scale + self.translation;
@@ -171,6 +210,23 @@ impl Transform {
             self.rotation + other.rotation,
             self.scale * other.scale,
         )
+    }
+
+    //fp as_svg_attribute_string
+    pub fn as_svg_attribute_string(&self) -> String {
+        let mut r = String::new();
+        let dxy = self.translation;
+        if dxy[0] != 0. || dxy[1] != 0. {
+            r.push_str(&format!("translate({:.4} {:.4}) ", dxy[0], dxy[1]));
+        }
+        if self.rotation != 0. {
+            r.push_str(&format!("rotate({:.4}) ", self.rotation));
+            dbg!(&r);
+        }
+        if self.scale != 1. {
+            r.push_str(&format!("scale({:.4}) ", self.scale));
+        }
+        r
     }
 
     //zz All done

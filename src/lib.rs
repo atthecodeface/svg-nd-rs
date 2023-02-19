@@ -25,24 +25,29 @@ pub type Bezier = bezier_nd::Bezier<f64, Point, 2>;
 
 mod bbox;
 mod bezier_path;
+mod color_database;
 mod polygon;
 mod range;
 mod transform;
+// mod xml;
 
 pub use bbox::BBox;
 pub use bezier_path::BezierPath;
+pub use color_database::{Color, ColorDatabase};
 pub use polygon::Polygon;
 pub use range::Range;
 pub use transform::Transform;
-
 // mod generate_svg;
-// mod svg;
-// mod svg_element;
-// mod svg_element_iter;
+
+mod svg;
+mod svg_colors;
+mod svg_element;
 mod svg_error;
+mod svg_event;
 
 // pub use generate_svg::{GenerateSvg, GenerateSvgElement};
-// pub use svg::Svg;
-// pub use svg_element::SvgElement;
-// pub use svg_element_iter::ElementIter;
+pub use svg::{Svg, SvgConfig};
+pub use svg_colors::SvgColorDatabase;
+pub use svg_element::SvgElement;
 pub use svg_error::SvgError;
+pub use svg_event::ElementIter;

@@ -48,6 +48,7 @@ impl std::default::Default for Range {
 impl Range {
     //fp new
     /// Create a new point from (min,max)
+    #[must_use]
     #[inline]
     pub fn new(min: f64, max: f64) -> Self {
         Self { min, max }
@@ -55,6 +56,7 @@ impl Range {
 
     //fp none
     /// Create a new empty range (0,0)
+    #[must_use]
     #[inline]
     pub const fn none() -> Self {
         Self { min: 0., max: -1. }
@@ -68,6 +70,8 @@ impl Range {
     }
 
     //fp of_pts
+    #[must_use]
+    #[inline]
     pub fn of_pts(a: f64, b: f64) -> Self {
         if a < b {
             Self::new(a, b)
@@ -96,6 +100,8 @@ impl Range {
 
     //cp include
     /// Include a point into the range, exanding min or max if required
+    #[must_use]
+    #[inline]
     pub fn include(mut self, x: f64) -> Self {
         if self.is_none() {
             self.min = x;
@@ -113,6 +119,8 @@ impl Range {
 
     //cp enlarge
     /// Enlarge by an amount
+    #[must_use]
+    #[inline]
     pub fn enlarge(mut self, value: f64) -> Self {
         if !self.is_none() {
             self.min -= value;
@@ -123,6 +131,8 @@ impl Range {
 
     //cp reduce
     /// Reduce by an amount
+    #[must_use]
+    #[inline]
     pub fn reduce(mut self, value: f64) -> Self {
         if !self.is_none() {
             self.min += value;
@@ -134,6 +144,8 @@ impl Range {
     //cp union
     /// Consume the range, and find the union min and max of this with
     /// another, returning the new region
+    #[must_use]
+    #[inline]
     pub fn union(mut self, other: &Range) -> Self {
         if other.is_none() {
             self
@@ -155,6 +167,8 @@ impl Range {
     //cp intersect
     /// Consume the range, and find the intersection min and max of this with
     /// another, returning the new region
+    #[must_use]
+    #[inline]
     pub fn intersect(mut self, other: &Range) -> Self {
         if other.is_none() {
             self
