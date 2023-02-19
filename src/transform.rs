@@ -277,15 +277,23 @@ impl std::ops::Div<f64> for Transform {
 //ip std::fmt::Display for Transform
 impl std::fmt::Display for Transform {
     //mp fmt - format a `Transform` for display
-    /// Display the `TokenError` in a human-readable form
+    /// Display the `Transform` in a human-readable form
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         if self.translation.is_zero() && self.rotation == 0. && self.scale == 1. {
             write!(f, "<identity>")
         } else if self.rotation == 0. && self.scale == 1. {
-            write!(f, "<+{:?}>", self.translation)
+            write!(
+                f,
+                "<+({:.4}, {:.4})>",
+                self.translation[0], self.translation[1]
+            )
         } else {
             if !self.translation.is_zero() {
-                write!(f, "<+{:?}>", self.translation)?
+                write!(
+                    f,
+                    "<+({:.4}, {:.4})>",
+                    self.translation[0], self.translation[1]
+                )?
             };
             if self.rotation != 0. {
                 write!(f, "<rot({})>", self.rotation)?

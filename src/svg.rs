@@ -17,6 +17,9 @@ limitations under the License.
  */
 
 //a Imports
+use indent_display::{IndentedDisplay, Indenter};
+
+use crate::IndentOpt;
 use crate::{BBox, Color, ColorDatabase, ElementIter, SvgColorDatabase, SvgElement, SvgError};
 
 //a SvgVersion
@@ -107,12 +110,28 @@ pub struct Svg {
     pub version: SvgVersion,
     /// Configuration
     pub config: SvgConfig,
+    /// Bounding box
+    bbox: BBox,
     /// Contents of the SVG
     contents: Vec<SvgElement>,
     /// Definitions in the SVG
     definitions: Vec<SvgElement>,
     /// Stack of elements being created
     stack: Vec<SvgElement>,
+}
+
+//ip IndentedDisplay for Svg
+impl<'a> IndentedDisplay<'a, IndentOpt> for Svg {
+    fn indent(&self, f: &mut Indenter<'a, IndentOpt>) -> Result<(), std::fmt::Error> {
+        "Svg".indent(f)?;
+        {
+            let mut sub = f.push("...");
+            for c in self.contents.iter() {
+                c.indent(&mut sub)?;
+            }
+        }
+        Ok(())
+    }
 }
 
 //ip Svg
@@ -123,6 +142,7 @@ impl Svg {
         Self {
             version: "2.0".into(),
             config,
+            bbox: BBox::none(),
             contents: vec![],
             definitions: vec![],
             stack: vec![],
@@ -196,11 +216,11 @@ impl Svg {
         self.definitions.push(self.stack.pop().unwrap());
     }
 
-    //mp generate_diagram
-    pub fn generate_diagram(&mut self) -> Result<(), SvgError> {
+    //mp finalize
+    pub fn finalize(&mut self) {
         assert!(
             self.stack.is_empty(),
-            "The stack should be empty before generating a diagram"
+            "The stack should be empty before finalizing"
         );
 
         let mut child_extra = vec![];
@@ -209,12 +229,18 @@ impl Svg {
             child_extra.append(&mut c.finalize(&self.config));
             bbox = bbox.union(c.bbox());
         }
+        self.bbox = bbox;
         // Children are finalized now
         for c in child_extra {
             self.contents.push(c);
         }
+    }
 
-        let (x, y, w, h) = bbox.get_bounds();
+    //mp generate_diagram
+    pub fn generate_diagram(&mut self) -> Result<(), SvgError> {
+        self.finalize();
+
+        let (x, y, w, h) = self.bbox.get_bounds();
         let mut ele = SvgElement::new("svg");
         ele.add_attribute("svg", Some("xmlns"), "http://www.w3.org/2000/svg");
         ele.add_attribute("xmlns", None, "http://www.w3.org/2000/svg");

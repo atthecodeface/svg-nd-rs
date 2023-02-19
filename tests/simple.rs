@@ -24,9 +24,14 @@ fn test_0() {
     svg.stack_push(e);
     svg.contents_take_stack();
 
+    let mut stdout = std::io::stdout();
+    use indent_display::IndentedDisplay;
+    let mut ind = indent_display::Indenter::new(&mut stdout, "  ", &svg_nd::IndentOpt());
+    svg.finalize();
+    svg.indent(&mut ind);
     svg.generate_diagram();
     for e in svg.iter_events() {
         println!("{}", e.as_xml());
     }
-    assert!(false);
+    // assert!(false);
 }

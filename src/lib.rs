@@ -17,6 +17,10 @@ limitations under the License.
  */
 
 //a Imports
+use indent_display::IndentedOptions;
+pub struct IndentOpt();
+impl<'a> IndentedOptions<'a> for IndentOpt {}
+
 /// The [Point] type is a 2D point of f64's
 pub type Point = geo_nd::FArray<f64, 2>;
 

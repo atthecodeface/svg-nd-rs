@@ -17,9 +17,11 @@ limitations under the License.
  */
 
 //a Imports
-use crate::{
-    BBox, BezierPath, Color, ColorDatabase, Point, Polygon, SvgColorDatabase, SvgConfig, Transform,
-};
+use indent_display::{IndentedDisplay, Indenter};
+
+use crate::IndentOpt;
+use crate::{BBox, BezierPath, Color, ColorDatabase, Point, Polygon, Transform};
+use crate::{SvgColorDatabase, SvgConfig};
 
 //a Useful stuff
 fn pt_as_str(pt: &Point) -> String {
@@ -38,6 +40,29 @@ pub struct SvgElement {
     contents: Vec<SvgElement>,
     characters: String,
     bbox: BBox,
+}
+
+//ip IndentedDisplay for SvgElement
+impl<'a> IndentedDisplay<'a, IndentOpt> for SvgElement {
+    fn indent(&self, f: &mut Indenter<'a, IndentOpt>) -> Result<(), std::fmt::Error> {
+        use std::fmt::Write;
+        if let Some(prefix) = &self.prefix {
+            write!(f, "{}::{}", prefix, self.name)?;
+        } else {
+            write!(f, "{}", self.name)?;
+        }
+        if !self.transform.is_identity() {
+            write!(f, " {}", self.transform)?;
+        }
+        writeln!(f)?;
+        {
+            let mut sub = f.push("...");
+            for c in self.contents.iter() {
+                c.indent(&mut sub)?;
+            }
+        }
+        Ok(())
+    }
 }
 
 //ip SvgElement

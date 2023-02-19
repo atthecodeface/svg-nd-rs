@@ -1,6 +1,6 @@
 [package]
 name = "svg-nd"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 readme = "README.md"
 authors = ["Gavin J Stark"]
@@ -16,5 +16,4 @@ repository = "https://github.com/atthecodeface/svg-rs"
 thiserror = "1.0"
 geo-nd = "0.5"
 bezier-nd = "0.5"
-xml-rs = "0.8.4"
 indent-display = "0.1"
