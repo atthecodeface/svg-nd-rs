@@ -144,9 +144,9 @@ impl SvgElement {
         let mut r = String::new();
         r.push_str(&format!("M {}", pt_as_str(&bp.get_pt(0))));
         for b in bp.iter_beziers() {
-            if b.is_line() {
+            if b.degree() == 1 {
                 r.push_str(&format!(" L {}", pt_as_str(b.borrow_pt(1))))
-            } else if b.is_quadratic() {
+            } else if b.degree() == 2 {
                 r.push_str(&format!(
                     " Q {} {}",
                     pt_as_str(b.borrow_pt(2)),

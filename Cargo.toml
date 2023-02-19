@@ -14,6 +14,7 @@ repository = "https://github.com/atthecodeface/svg-rs"
 
 [dependencies]
 thiserror = "1.0"
-geo-nd = "0.1.2"
-bezier-nd = "0.1.4"
+geo-nd = "0.5"
+bezier-nd = "0.5"
 xml-rs = "0.8.4"
+indent-display = "0.1"

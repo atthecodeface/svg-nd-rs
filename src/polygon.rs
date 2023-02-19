@@ -313,12 +313,12 @@ mod tests_polygon {
         );
     }
     pub fn bezier_eq(bez: &Bezier, v: Vec<(f64, f64)>) {
-        if bez.is_cubic() {
+        if bez.degree() == 3 {
             pt_eq(bez.borrow_pt(0), v[0].0, v[0].1);
             pt_eq(bez.borrow_pt(2), v[1].0, v[1].1);
             pt_eq(bez.borrow_pt(3), v[2].0, v[2].1);
             pt_eq(bez.borrow_pt(1), v[3].0, v[3].1);
-        } else if bez.is_quadratic() {
+        } else if bez.degree() == 2 {
             pt_eq(bez.borrow_pt(0), v[0].0, v[0].1);
             pt_eq(bez.borrow_pt(2), v[1].0, v[1].1);
             pt_eq(bez.borrow_pt(1), v[2].0, v[2].1);
