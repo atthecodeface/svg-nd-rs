@@ -1,5 +1,5 @@
 //a Imports
-use svg_nd::{BezierPath, Svg, SvgConfig, SvgElement, Transform};
+use svg_nd::{BezierPath, Svg, SvgConfig, SvgElement, SvgPath, Transform};
 
 #[test]
 fn test_0() {
@@ -9,17 +9,15 @@ fn test_0() {
 
     let mut svg = Svg::new(svg_config);
 
-    let mut e = SvgElement::new("path");
-    e.add_color("fill", "red");
     let b = BezierPath::of_ellipse([0., 0.].into(), 10., 1.40, 65.0);
-    e.add_bezier_path(&b, true);
+    let mut e = SvgPath::new_path(b, true);
+    e.add_color("fill", "red");
     svg.stack_push(e);
     svg.contents_take_stack();
 
-    let mut e = SvgElement::new("path");
-    e.add_color("fill", (0., 1.0, 0.));
     let b = BezierPath::of_ellipse([0., 0.].into(), 10., 1.40, 35.0);
-    e.add_bezier_path(&b, true);
+    let mut e = SvgPath::new_path(b, true);
+    e.add_color("fill", (0., 1.0, 0.));
     e.apply_transform(&(Transform::of_rotation(30.0) + [20., 20.].into()));
     svg.stack_push(e);
     svg.contents_take_stack();
@@ -33,5 +31,5 @@ fn test_0() {
     for e in svg.iter_events() {
         println!("{}", e.as_xml());
     }
-    // assert!(false);
+    assert!(false);
 }

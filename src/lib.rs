@@ -52,6 +52,6 @@ mod svg_event;
 // pub use generate_svg::{GenerateSvg, GenerateSvgElement};
 pub use svg::{Svg, SvgConfig};
 pub use svg_colors::SvgColorDatabase;
-pub use svg_element::SvgElement;
+pub use svg_element::{SvgElement, SvgElementType, SvgGroup, SvgPath, SvgSvg};
 pub use svg_error::SvgError;
 pub use svg_event::ElementIter;

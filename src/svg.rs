@@ -20,7 +20,9 @@ limitations under the License.
 use indent_display::{IndentedDisplay, Indenter};
 
 use crate::IndentOpt;
-use crate::{BBox, Color, ColorDatabase, ElementIter, SvgColorDatabase, SvgElement, SvgError};
+use crate::{
+    BBox, Color, ColorDatabase, ElementIter, SvgColorDatabase, SvgElement, SvgError, SvgSvg,
+};
 
 //a SvgVersion
 //tp SvgVersion
@@ -241,7 +243,7 @@ impl Svg {
         self.finalize();
 
         let (x, y, w, h) = self.bbox.get_bounds();
-        let mut ele = SvgElement::new("svg");
+        let mut ele = SvgSvg::new();
         ele.add_attribute("svg", Some("xmlns"), "http://www.w3.org/2000/svg");
         ele.add_attribute("xmlns", None, "http://www.w3.org/2000/svg");
         ele.add_attribute("version", None, self.version.into());
@@ -250,12 +252,12 @@ impl Svg {
         ele.add_attribute("viewBox", None, &format!("{} {} {} {}", x, y, w, h));
         self.stack_push(ele);
 
-        let ele = SvgElement::new("defs");
-        self.stack_push(ele);
-        for d in std::mem::take(&mut self.definitions) {
-            self.stack_add_subelement(d);
-        }
-        self.stack_pop_to_child();
+        //let ele = SvgElement::new("defs");
+        //self.stack_push(ele);
+        //for d in std::mem::take(&mut self.definitions) {
+        //self.stack_add_subelement(d);
+        //}
+        //self.stack_pop_to_child();
 
         for d in std::mem::take(&mut self.contents) {
             self.stack_add_subelement(d);
