@@ -43,20 +43,34 @@ impl<'a> NamespaceName<'a> {
         let name = name.into();
         Self { name, ns: None }
     }
-    fn new(name: &str, ns: Option<&str>) -> Self {
+    fn new(name: &'a str, ns: Option<&'a str>) -> Self {
         let name = name.into();
         let ns = ns.map(|ns| ns.into());
         Self { name, ns }
     }
 }
+impl<'a> std::fmt::Display for NamespaceName<'a> {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        if let Some(ns) = &self.ns {
+            write!(fmt, "{}:{}", ns, self.name)
+        } else {
+            self.name.fmt(fmt)
+        }
+    }
+}
+impl<'a> std::fmt::Debug for NamespaceName<'a> {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        std::fmt::Display::fmt(self, fmt)
+    }
+}
 
 //a SvgElementType
-pub trait SvgElementType: std::fmt::Debug {
+pub trait SvgElementType<'a>: std::fmt::Debug {
     /// Get the SVG element name (e.g. 'path')
-    fn ns_name(&self) -> NamespaceName;
+    fn ns_name(&self) -> NamespaceName<'a>;
 
     /// Finalize
-    fn finalize(&mut self, _svg_cfg: &SvgConfig, _contents: &[SvgElement], _characters: &str) {}
+    fn finalize(&mut self, _svg_cfg: &SvgConfig, _contents: &[SvgElement<'a>], _characters: &str) {}
 
     /// Get the bbox of the element (not its explicit contents) post-finalize
     ///
@@ -67,7 +81,7 @@ pub trait SvgElementType: std::fmt::Debug {
     }
 
     /// Push the attributes when ready for rendering as SVG (post-finalize)
-    fn push_attributes(&self, attrs: &mut Vec<(NamespaceName, String)>) {}
+    fn push_attributes(&self, attrs: &mut Vec<(NamespaceName<'a>, String)>) {}
 }
 
 //a SvgElementTypes
@@ -77,15 +91,15 @@ pub struct SvgSvg();
 
 //ip SvgSvg
 impl SvgSvg {
-    pub fn new() -> SvgElement {
+    pub fn new<'a>() -> SvgElement<'a> {
         let g = Self();
-        SvgElement::new("svg", g)
+        SvgElement::new(g)
     }
 }
 
 //ip SvgElementType for SvgSvg
-impl SvgElementType for SvgSvg {
-    fn ns_name(&self) -> NamespaceName {
+impl<'a> SvgElementType<'a> for SvgSvg {
+    fn ns_name(&self) -> NamespaceName<'a> {
         NamespaceName::local("svg")
     }
 }
@@ -96,15 +110,15 @@ pub struct SvgGroup();
 
 //ip SvgGroup
 impl SvgGroup {
-    pub fn new() -> SvgElement {
+    pub fn new<'a>() -> SvgElement<'a> {
         let g = Self();
-        SvgElement::new("g", g)
+        SvgElement::new(g)
     }
 }
 
 //ip SvgElementType for SvgGroup
-impl SvgElementType for SvgGroup {
-    fn ns_name(&self) -> NamespaceName {
+impl<'a> SvgElementType<'a> for SvgGroup {
+    fn ns_name(&self) -> NamespaceName<'a> {
         NamespaceName::local("g")
     }
 }
@@ -119,27 +133,27 @@ pub struct SvgPath {
 //ip SvgPath
 impl SvgPath {
     //fp new_path
-    pub fn new_path(bp: BezierPath, closed: bool) -> SvgElement {
+    pub fn new_path<'a>(bp: BezierPath, closed: bool) -> SvgElement<'a> {
         let p = Self { path: bp, closed };
-        SvgElement::new("path", p)
+        SvgElement::new(p)
     }
 
     //fp new_box
-    pub fn new_box(bbox: BBox) -> SvgElement {
+    pub fn new_box<'a>(bbox: BBox) -> SvgElement<'a> {
         let (c, w, h) = bbox.get_cwh();
         let rect = Polygon::new_rect(w, h) + c;
         Self::new_polygon(rect, true)
     }
 
     //fp new_polygon
-    pub fn new_polygon(p: Polygon, closed: bool) -> SvgElement {
+    pub fn new_polygon<'a>(p: Polygon, closed: bool) -> SvgElement<'a> {
         Self::new_path(p.as_paths(), closed)
     }
 }
 
 //ip SvgElementType for SvgPath
-impl SvgElementType for SvgPath {
-    fn ns_name(&self) -> NamespaceName {
+impl<'a> SvgElementType<'a> for SvgPath {
+    fn ns_name(&self) -> NamespaceName<'a> {
         NamespaceName::local("path")
     }
     fn bbox(&self) -> BBox {
@@ -152,7 +166,7 @@ impl SvgElementType for SvgPath {
         bbox
     }
     /// Push the attributes when ready for rendering as SVG (post-finalize)
-    fn push_attributes(&self, attrs: &mut Vec<(NamespaceName, String)>) {
+    fn push_attributes(&self, attrs: &mut Vec<(NamespaceName<'a>, String)>) {
         let mut r = String::new();
         r.push_str(&format!("M {}", pt_as_str(&self.path.get_pt(0))));
         for b in self.path.iter_beziers() {
@@ -199,22 +213,22 @@ pub struct SvgGrid {
 //ip SvgGrid
 impl SvgGrid {
     //fp new
-    pub fn new(bbox: BBox, spacings: (f64, f64)) -> SvgElement {
+    pub fn new<'a>(bbox: BBox, spacings: (f64, f64)) -> SvgElement<'a> {
         let p = Self { spacings, bbox };
-        SvgElement::new("grid", p)
+        SvgElement::new(p)
     }
 }
 
 //ip SvgElementType for SvgGrid
-impl SvgElementType for SvgGrid {
-    fn ns_name(&self) -> NamespaceName {
+impl<'a> SvgElementType<'a> for SvgGrid {
+    fn ns_name(&self) -> NamespaceName<'a> {
         NamespaceName::local("path")
     }
     fn bbox(&self) -> BBox {
         self.bbox
     }
     /// Push the attributes when ready for rendering as SVG (post-finalize)
-    fn push_attributes(&self, attrs: &mut Vec<(NamespaceName, String)>) {
+    fn push_attributes(&self, attrs: &mut Vec<(NamespaceName<'a>, String)>) {
         let xmin = ((self.bbox.x[0] / self.spacings.0) + 0.).floor() as isize;
         let xmax = ((self.bbox.x[1] / self.spacings.0) + 1.).floor() as isize;
         let xlen = xmax - xmin;
@@ -254,26 +268,20 @@ impl SvgElementType for SvgGrid {
 //a SvgElement
 //tp SvgElement
 #[derive(Debug)]
-pub struct SvgElement {
-    ele_type: Box<dyn SvgElementType>,
-    pub name: String,
-    pub prefix: Option<String>,
-    attributes: Vec<(NamespaceName, String)>,
+pub struct SvgElement<'a> {
+    ele_type: Box<dyn SvgElementType<'a> + 'a>,
+    attributes: Vec<(NamespaceName<'a>, String)>,
     transform: Transform,
-    contents: Vec<SvgElement>,
+    contents: Vec<SvgElement<'a>>,
     characters: String,
     bbox: BBox,
 }
 
 //ip IndentedDisplay for SvgElement
-impl<'a> IndentedDisplay<'a, IndentOpt> for SvgElement {
-    fn indent(&self, f: &mut Indenter<'a, IndentOpt>) -> Result<(), std::fmt::Error> {
+impl<'a, 'i> IndentedDisplay<'i, IndentOpt> for SvgElement<'a> {
+    fn indent(&self, f: &mut Indenter<'i, IndentOpt>) -> Result<(), std::fmt::Error> {
         use std::fmt::Write;
-        if let Some(prefix) = &self.prefix {
-            write!(f, "{}::{}", prefix, self.name)?;
-        } else {
-            write!(f, "{}", self.name)?;
-        }
+        write!(f, "{}", self.ele_type.ns_name())?;
         if !self.transform.is_identity() {
             write!(f, " {}", self.transform)?;
         }
@@ -289,15 +297,13 @@ impl<'a> IndentedDisplay<'a, IndentOpt> for SvgElement {
 }
 
 //ip SvgElement
-impl SvgElement {
+impl<'a> SvgElement<'a> {
     //fp new
     /// Create a new SvgElement from something that only contains static references
-    pub fn new<I: Into<String>, E: SvgElementType + 'static>(name: I, ele_type: E) -> Self {
+    pub fn new<E: SvgElementType<'a> + 'a>(ele_type: E) -> Self {
         let ele_type = Box::new(ele_type);
         Self {
             ele_type,
-            name: name.into(),
-            prefix: None,
             attributes: Vec::new(),
             transform: Transform::default(),
             contents: Vec::new(),
@@ -306,14 +312,9 @@ impl SvgElement {
         }
     }
 
-    //ap name
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    //cp set_prefix
-    pub fn set_prefix<I: Into<String>>(mut self, prefix: Option<I>) {
-        self.prefix = prefix.map(|s| s.into())
+    //ap ns_name
+    pub fn ns_name(&self) -> NamespaceName<'a> {
+        self.ele_type.ns_name()
     }
 
     //ap attributes
@@ -327,7 +328,7 @@ impl SvgElement {
     }
 
     //ap contents
-    pub fn contents(&self) -> &[SvgElement] {
+    pub fn contents(&self) -> &[Self] {
         &self.contents
     }
 
@@ -342,10 +343,9 @@ impl SvgElement {
     }
 
     //fp add_attribute
-    pub fn add_attribute(&mut self, name: &str, prefix: Option<&str>, value: &str) {
+    pub fn add_attribute(&mut self, name: &'a str, prefix: Option<&'a str>, value: &str) {
         let ns_name = NamespaceName::new(name, prefix);
-        self.attributes
-            .push((name.into(), prefix.map(|s| s.into()), value.into()));
+        self.attributes.push((ns_name, value.into()));
     }
 
     //fp push_string
@@ -364,14 +364,14 @@ impl SvgElement {
     }
 
     //fp add_size
-    pub fn add_size(&mut self, name: &str, value: f64) {
+    pub fn add_size(&mut self, name: &'a str, value: f64) {
         self.add_attribute(name, None, &format!("{:.4}", value));
     }
 
     //fp add_color
-    pub fn add_color<'a, T>(&mut self, attr_name: &str, color: T)
+    pub fn add_color<'c, T>(&mut self, attr_name: &'a str, color: T)
     where
-        (T, &'a ColorDatabase<'a>): Into<Color>,
+        (T, &'c ColorDatabase<'c>): Into<Color>,
     {
         let color: Color = (color, &SvgColorDatabase).into();
         let color = color.as_str();
@@ -392,12 +392,12 @@ impl SvgElement {
     }
 
     //fp push_content
-    pub fn push_content(&mut self, e: SvgElement) {
+    pub fn push_content(&mut self, e: Self) {
         self.contents.push(e);
     }
 
     //mp finalize
-    pub fn finalize(&mut self, svg_cfg: &SvgConfig) -> Vec<SvgElement> {
+    pub fn finalize(&mut self, svg_cfg: &SvgConfig) -> Vec<Self> {
         let transform = self.transform.as_svg_attribute_string();
 
         let mut bbox = BBox::none();
@@ -422,6 +422,7 @@ impl SvgElement {
             if !transform.is_empty() {
                 e.add_attribute("transform", None, &transform);
             }
+            e.ele_type.push_attributes(&mut e.attributes);
             extra.push(e);
         }
         self.bbox = self.bbox.transform(&self.transform);
@@ -445,19 +446,19 @@ impl SvgElement {
     //cp new_grid
     /// Create a grid element with given region, spacing, line
     /// width and color
-    pub fn new_grid(bbox: BBox, spacing: f64, line_width: f64, color: &str) -> Option<Self> {
+    pub fn new_grid(bbox: BBox, spacing: f64, line_width: f64, color: &str) -> Self {
         let mut grid = SvgGrid::new(bbox, (spacing, spacing));
         grid.add_attribute("fill", None, "None");
         grid.add_attribute("stroke", None, color);
         grid.add_attribute("stroke-width", None, &format!("{}", line_width));
-        Some(grid)
+        grid
     }
 
     //fp display
     pub fn display(&self, indent: usize) {
         let indent_str = &INDENT_STRING[0..indent];
-        println!("{}{}", indent_str, self.name);
-        for (n, _p, v) in &self.attributes {
+        println!("{}{}", indent_str, self.ele_type.ns_name());
+        for (n, v) in &self.attributes {
             println!("{}      {}={}", indent_str, n, v);
         }
         for e in &self.contents {

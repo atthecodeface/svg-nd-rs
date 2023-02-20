@@ -17,29 +17,29 @@ limitations under the License.
  */
 
 //a Imports
-use super::SvgElement;
+use crate::SvgElement;
 
 //a XmlEvent
 //tp XmlEvent
 #[derive(Debug)]
-pub enum XmlEvent<'a> {
+pub enum XmlEvent<'a, 'x> {
     StartDocument,
     EndDocument,
-    StartElement(&'a SvgElement),
-    EndElement(&'a SvgElement),
-    Characters(&'a SvgElement),
+    StartElement(&'x SvgElement<'a>),
+    EndElement(&'x SvgElement<'a>),
+    Characters(&'x SvgElement<'a>),
 }
 
 //ip XmlEvent
-impl<'a> XmlEvent<'a> {
+impl<'a, 'x> XmlEvent<'a, 'x> {
     pub fn as_xml(&self) -> String {
         use XmlEvent::*;
         match self {
             StartDocument => r#"<?xml version="1.0" encoding="utf8"?>"#.into(),
             EndDocument => "".into(),
             StartElement(e) => {
-                let mut r = format!("<{}", e.name());
-                for (n, _op, v) in e.attributes() {
+                let mut r = format!("<{}", e.ns_name());
+                for (n, v) in e.attributes() {
                     r.push_str(&format!(r#" {}="{}""#, n, v));
                 }
                 r.push('>');
@@ -47,7 +47,7 @@ impl<'a> XmlEvent<'a> {
             }
             Characters(e) => e.characters().into(),
             EndElement(e) => {
-                format!("</{}>", e.name())
+                format!("</{}>", e.ns_name())
             }
         }
     }
@@ -69,16 +69,16 @@ enum IterState {
 
 //tp ElementIter
 /// An iterator structure to permit iteration over an Svg object's elements
-pub struct ElementIter<'a> {
+pub struct ElementIter<'a, 'i> {
     state: IterState,
-    elements: Vec<(&'a SvgElement, usize)>,
+    elements: Vec<(&'i SvgElement<'a>, usize)>,
 }
 
 //ip ElementIter
-impl<'a> ElementIter<'a> {
+impl<'a, 'i> ElementIter<'a, 'i> {
     //fp new
     /// Create a new Svg element iterator
-    pub fn new(e: &'a SvgElement) -> Self {
+    pub fn new(e: &'i SvgElement<'a>) -> Self {
         let elements = vec![(e, 0)];
         Self {
             state: IterState::PreDocument,
@@ -88,8 +88,8 @@ impl<'a> ElementIter<'a> {
 }
 
 //ip Iterator for ElementIter
-impl<'a> Iterator for ElementIter<'a> {
-    type Item = XmlEvent<'a>;
+impl<'a, 'i> Iterator for ElementIter<'a, 'i> {
+    type Item = XmlEvent<'a, 'i>;
     fn next(&mut self) -> Option<Self::Item> {
         match self.state {
             IterState::PreDocument => {

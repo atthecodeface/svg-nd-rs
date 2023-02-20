@@ -107,7 +107,7 @@ impl SvgConfig {
 /// `generate_svg` method is invoked.
 ///
 /// This method requires the `GenerateSvg` to be brought in to scope.
-pub struct Svg {
+pub struct Svg<'a> {
     /// version of SVG - 10, 11 or 20
     pub version: SvgVersion,
     /// Configuration
@@ -115,16 +115,16 @@ pub struct Svg {
     /// Bounding box
     bbox: BBox,
     /// Contents of the SVG
-    contents: Vec<SvgElement>,
+    contents: Vec<SvgElement<'a>>,
     /// Definitions in the SVG
-    definitions: Vec<SvgElement>,
+    definitions: Vec<SvgElement<'a>>,
     /// Stack of elements being created
-    stack: Vec<SvgElement>,
+    stack: Vec<SvgElement<'a>>,
 }
 
 //ip IndentedDisplay for Svg
-impl<'a> IndentedDisplay<'a, IndentOpt> for Svg {
-    fn indent(&self, f: &mut Indenter<'a, IndentOpt>) -> Result<(), std::fmt::Error> {
+impl<'a, 'i> IndentedDisplay<'i, IndentOpt> for Svg<'a> {
+    fn indent(&self, f: &mut Indenter<'i, IndentOpt>) -> Result<(), std::fmt::Error> {
         "Svg".indent(f)?;
         {
             let mut sub = f.push("...");
@@ -137,7 +137,7 @@ impl<'a> IndentedDisplay<'a, IndentOpt> for Svg {
 }
 
 //ip Svg
-impl Svg {
+impl<'a> Svg<'a> {
     //fp new
     /// Create a new `Svg` instance, to render a `Diagram` into
     pub fn new(config: SvgConfig) -> Self {
@@ -160,17 +160,17 @@ impl Svg {
     }
 
     //mp stack_push
-    pub fn stack_push(&mut self, e: SvgElement) {
+    pub fn stack_push(&mut self, e: SvgElement<'a>) {
         self.stack.push(e);
     }
 
     //mp stack_pop
-    pub fn stack_pop(&mut self) -> SvgElement {
+    pub fn stack_pop(&mut self) -> SvgElement<'a> {
         self.stack.pop().unwrap()
     }
 
     //mp stack_add_subelement
-    pub fn stack_add_subelement(&mut self, e: SvgElement) {
+    pub fn stack_add_subelement(&mut self, e: SvgElement<'a>) {
         #![track_caller]
         assert!(
             !self.stack.is_empty(),
@@ -189,7 +189,7 @@ impl Svg {
     }
 
     //mp contents_add_element
-    pub fn contents_add_element(&mut self, e: SvgElement) {
+    pub fn contents_add_element(&mut self, e: SvgElement<'a>) {
         self.contents.push(e);
     }
 
@@ -204,7 +204,7 @@ impl Svg {
     }
 
     //mp definitions_add_element
-    pub fn definitions_add_element(&mut self, e: SvgElement) {
+    pub fn definitions_add_element(&mut self, e: SvgElement<'a>) {
         self.definitions.push(e);
     }
 
@@ -240,8 +240,6 @@ impl Svg {
 
     //mp generate_diagram
     pub fn generate_diagram(&mut self) -> Result<(), SvgError> {
-        self.finalize();
-
         let (x, y, w, h) = self.bbox.get_bounds();
         let mut ele = SvgSvg::new();
         ele.add_attribute("svg", Some("xmlns"), "http://www.w3.org/2000/svg");
@@ -252,23 +250,21 @@ impl Svg {
         ele.add_attribute("viewBox", None, &format!("{} {} {} {}", x, y, w, h));
         self.stack_push(ele);
 
-        //let ele = SvgElement::new("defs");
-        //self.stack_push(ele);
-        //for d in std::mem::take(&mut self.definitions) {
-        //self.stack_add_subelement(d);
+        // let ele = SvgElement::new("defs");
+        // self.stack_push(ele);
+        // for d in std::mem::take(&mut self.definitions) {
+        // self.stack_add_subelement(d);
         //}
-        //self.stack_pop_to_child();
+        // self.stack_pop_to_child();
 
         for d in std::mem::take(&mut self.contents) {
             self.stack_add_subelement(d);
         }
 
         if self.config.show_grid {
-            if let Some(ele) =
-                SvgElement::new_grid(BBox::new(-100., -100., 100., 100.), 10., 0.1, "grey")
-            {
-                self.stack_add_subelement(ele);
-            }
+            let mut e = SvgElement::new_grid(self.bbox, 10., 0.1, "grey");
+            let _ = e.finalize(&self.config);
+            self.stack_add_subelement(e);
         }
 
         Ok(())
@@ -280,7 +276,7 @@ impl Svg {
     ///
     /// This permits the SVG to be read by an XML reader, or written
     /// using xml-rs to convert reader XmlEvents to writer XmlEvents.
-    pub fn iter_events(&self) -> ElementIter {
+    pub fn iter_events<'i>(&'i self) -> ElementIter<'a, 'i> {
         ElementIter::new(&self.stack[0])
     }
 
