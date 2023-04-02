@@ -19,7 +19,7 @@ limitations under the License.
 //a Imports
 use geo_nd::Vector;
 
-use crate::{Point, SvgError};
+use crate::{Error, Point};
 
 //a Transform type
 //tp Transform
@@ -28,7 +28,7 @@ use crate::{Point, SvgError};
 ///
 /// The transformation is translate(rotate(scale(pt)))
 ///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Transform {
     /// Translation - applied last
     translation: Point,
@@ -111,14 +111,14 @@ impl Transform {
     ///
     /// Hence the determinant must be >0 and its square root is the scale
     ///
-    pub fn of_matrix(matrix: &[f64]) -> Result<Self, SvgError> {
+    pub fn of_matrix(matrix: &[f64]) -> Result<Self, Error> {
         if matrix.len() != 9 {
-            Err(SvgError::InvalidTransformationMatrix {
+            Err(Error::InvalidTransformationMatrix {
                 reason: "matrix was not 3-by-3".into(),
             })?
         }
         if !(matrix[8] == 1. && matrix[7] == 0. && matrix[6] == 0.) {
-            Err(SvgError::InvalidTransformationMatrix {
+            Err(Error::InvalidTransformationMatrix {
                 reason: "bottom row must be 0, 0, 1".into(),
             })?
         }
@@ -126,14 +126,14 @@ impl Transform {
         let dy = matrix[5];
         let skew = matrix[0] * matrix[1] + matrix[4] * matrix[3];
         if skew.abs() > 1.0E-6 {
-            Err(SvgError::InvalidTransformationMatrix {
+            Err(Error::InvalidTransformationMatrix {
                 reason: "rotation portion (top left 4 values) represent a skew not a rotation"
                     .into(),
             })?
         }
         let sc2 = matrix[0] * matrix[4] - matrix[1] * matrix[3];
         if sc2 < -1.0E-9 {
-            Err(SvgError::InvalidTransformationMatrix {
+            Err(Error::InvalidTransformationMatrix {
                 reason: "determinant (scale squared) is negative".into(),
             })?
         }

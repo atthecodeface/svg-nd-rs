@@ -12,29 +12,17 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-@file    lib.rs
-@brief   Generate SVG output
+@file    svg_error.rs
+@brief   Errors when generating SVG output
  */
 
 //a Imports
-mod types;
-pub use types::{Attr, BBox, Bezier, Error, IndentOpt, Point, Range, Transform};
+use thiserror::Error;
 
-mod colors;
-pub use colors::{Color, ColorDatabase};
-
-mod shapes;
-pub use shapes::{BezierPath, Polygon};
-
-mod traits;
-
-mod namespace;
-pub use namespace::NamespaceName;
-
-pub use traits::{CreateSvg, SvgAttributes};
-mod elements;
-pub use elements::{Attributes, Config, LayoutElement, PreLayoutElement};
-pub use elements::{Element, Group, Path};
-
-pub struct Svg {}
-pub struct SvgElement {}
+//a Error
+//tp Error
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("Invalid transformation matrix, {reason}")]
+    InvalidTransformationMatrix { reason: String },
+}

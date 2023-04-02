@@ -31,39 +31,6 @@ fn pt_as_str(pt: &Point) -> String {
 }
 const INDENT_STRING: &str = "                                                            ";
 
-//a NamespaceName
-pub struct NamespaceName<'a> {
-    name: Cow<'a, str>,
-    ns: Option<Cow<'a, str>>,
-}
-
-//ip NamespaceName
-impl<'a> NamespaceName<'a> {
-    fn local<I: Into<Cow<'a, str>>>(name: I) -> Self {
-        let name = name.into();
-        Self { name, ns: None }
-    }
-    fn new(name: &'a str, ns: Option<&'a str>) -> Self {
-        let name = name.into();
-        let ns = ns.map(|ns| ns.into());
-        Self { name, ns }
-    }
-}
-impl<'a> std::fmt::Display for NamespaceName<'a> {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        if let Some(ns) = &self.ns {
-            write!(fmt, "{}:{}", ns, self.name)
-        } else {
-            self.name.fmt(fmt)
-        }
-    }
-}
-impl<'a> std::fmt::Debug for NamespaceName<'a> {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        std::fmt::Display::fmt(self, fmt)
-    }
-}
-
 //a SvgElementType
 pub trait SvgElementType<'a>: std::fmt::Debug {
     /// Get the SVG element name (e.g. 'path')

@@ -12,29 +12,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-@file    lib.rs
-@brief   Generate SVG output
+@file    shapes.rs
+@brief   Shapes used within diagrams
  */
 
 //a Imports
-mod types;
-pub use types::{Attr, BBox, Bezier, Error, IndentOpt, Point, Range, Transform};
-
-mod colors;
-pub use colors::{Color, ColorDatabase};
-
-mod shapes;
-pub use shapes::{BezierPath, Polygon};
-
-mod traits;
-
-mod namespace;
-pub use namespace::NamespaceName;
-
-pub use traits::{CreateSvg, SvgAttributes};
-mod elements;
-pub use elements::{Attributes, Config, LayoutElement, PreLayoutElement};
-pub use elements::{Element, Group, Path};
-
-pub struct Svg {}
-pub struct SvgElement {}
+mod bezier_path;
+mod polygon;
+pub use bezier_path::BezierPath;
+pub use polygon::Polygon;
